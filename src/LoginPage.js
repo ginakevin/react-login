@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState,useContext,useEffect } from 'react';
 import Button from '@mui/material/Button';
 import LoadingButton from '@mui/lab/LoadingButton';
 import SaveIcon from '@mui/icons-material/Save';
@@ -14,11 +14,36 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import FormHelperText from '@mui/material/FormHelperText';
 import Typography from '@mui/material/Typography';
+import { useNavigate } from 'react-router';
+import {AuthContext} from './ContextInfo'
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
+} from '@mui/material';
+
 
 
 const theme = createTheme();
 
+function countdownTimer(callback) {
+  let timeLeft = 3;
+  const countdownInterval = setInterval(() => {
+    timeLeft--;
+    if (timeLeft === 0) {
+      clearInterval(countdownInterval);
+      callback(true);
+    }
+    // console.log(timeLeft);
+  }, 1000);
+}
+
 function LoginPage() {
+
+  const navigate = useNavigate();
+  const { setAuth } = useContext(AuthContext);
 
   const [isLoading, setIsLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({
@@ -37,12 +62,15 @@ function LoginPage() {
   });
   const [isEmail, setIsEmail] = useState(false);
 
+  const [dialogState,setDialogState]=useState(false);
+
   const handleSginIn = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const entries = data.entries();
     let getFormErrorData = {};
     let isTrim = false;
+    let sessionObj={};
 
     for (const [name, value] of entries) {
       if (value.trim() === '') {
@@ -61,6 +89,11 @@ function LoginPage() {
 
     CheckLoadingButtonStatus(isTrim);
     
+    let checkUserEdit=(data.get('email')==='testAcount')?false:true;
+    sessionObj={ isAuthenticated: true, username: data.get('email'),isEdit:checkUserEdit }
+    sessionStorage.setItem("sessionAut", JSON.stringify(sessionObj));
+    navigate('/home');
+
 
     // console.log({
     //   email: data.get('email'),
@@ -95,8 +128,12 @@ function LoginPage() {
     if (!isEmail || !isAllValuesEqual(pwdHplertextColor)) {
       return;
     }
-    console.log('eeee');
+    console.log('eeee'+isTrim);
     CheckLoadingButtonStatus(isTrim);
+
+    countdownTimer(CheckLoadingButtonStatus);
+    setDialogState(true);
+  
     // setIsLoading(true);
   };
   const isAllValuesEqual = (obj) => {
@@ -218,6 +255,10 @@ function LoginPage() {
     let str = event.target.value;
     (emailRegex.test(str)) ? setIsEmail(true) : setIsEmail(false);
     handleFormErrorChange(event);
+  }
+
+  const handleDialogClose=()=>{
+    setDialogState(false);
   }
   return (
     <ThemeProvider theme={theme}>
@@ -400,6 +441,26 @@ function LoginPage() {
               </Box>
             </div>
           }
+            <Dialog
+              open={dialogState}
+              onClose={handleDialogClose}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+              <DialogTitle id="alert-dialog-title">
+                {"The storage function is currently unavailable."}
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                The current version is for frontend display only and does not provide the capability to save data to the database.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleDialogClose} autoFocus>
+                  Confirm
+                </Button>
+              </DialogActions>
+            </Dialog>
         </Box>
       </Container>
     </ThemeProvider>
