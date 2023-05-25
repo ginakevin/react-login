@@ -23,7 +23,7 @@ function Toollist(props){
       {text:'Dashbord',icon:<Dashboard /> },
       {text:'Create products',icon:<Create/>},
       {text:'Table',icon:<TableView/>},
-      {text:'Drafts',icon:<MailIcon/>},
+      {text:'ContactUs',icon:<MailIcon/>},
 
       // {text:'Dashbord',icon:<Dashboard /> },
       // {text:'Create products',icon:<Create/>},
@@ -81,7 +81,7 @@ function Toollist(props){
       </ListStyles>
       </div>
       <p></p>
-      <ListItemButton onClick={()=>{}}>
+      <ListItemButton onClick={() => props.handleListItemClick('Setting')}>
         <ListItemIcon  sx={{
                       minHeight: 30,
                       justifyContent: 'center',

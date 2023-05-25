@@ -12,9 +12,10 @@ import {Chart as chartjs} from 'chart.js/auto';
 
 
 const data = {
-  labels: rows.map((data)=>{
-    return data.productName.split("-")[0];
-  }),
+  // labels: rows.map((data)=>{
+  //   return data.productName.split("-")[0];
+  // }),
+  labels: [],
   datasets: [
     {
       label: "Amount",
@@ -29,7 +30,8 @@ const data = {
         "rgba(0,0,0,1)",
     ],
       borderWidth: 2,
-      data: rows.map((data)=>data.amount),
+      // data: rows.map((data)=>data.amount),
+      data:[],
     },
   ],
 };
@@ -73,14 +75,24 @@ const options = {
 
 
 
-const BarChart =({ id }) => {
+const BarChart =({ id ,chartData}) => {
+  const getData={
+    ...data,
+    labels: chartData.map((data)=>{
+        return data.productName;
+    }),
+    datasets: [{
+       ...data.datasets[0],
+       data: chartData.map((data)=>data.amount),
+    }],
+  };
 
   return (
     <Card>
       <CardContent>
         <CommonDiv isVisible={true}> 
             {(width, height) => (
-               <Bar id={id} data={data} options={options} />
+               <Bar id={id} data={getData} options={options} />
             )}
         </CommonDiv>
         <Typography  variant="h6" >

@@ -64,13 +64,53 @@ function LoginPage() {
 
   const [dialogState,setDialogState]=useState(false);
 
+  const [loginStatesText , setLoginStatesText]=useState("");
+
+
+  const fetchData = async (loginData) => {
+    let sessionObj={};
+      try {
+          const response = await fetch('http://demo1.tsmc-ai.com:3009/admins/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(loginData) // 根据需要设置请求体
+          });
+            
+            const jsonData = await response.json();
+            if("token" in jsonData){
+              setLoginStatesText(" login success");
+              // console.log(jsonData);
+              let checkUserEdit=!!parseInt(1);
+              // console.log(checkUserEdit);
+              sessionObj={ isAuthenticated: true, username: jsonData.username,isEdit:checkUserEdit,token:jsonData.token }
+              sessionStorage.setItem("sessionAut", JSON.stringify(sessionObj));
+              navigate('/home');
+
+            }else{
+              setLoginStatesText(" 登入錯誤,此帳密不存在 ");
+              
+            }
+            // console.log(jsonData);
+            CheckLoadingButtonStatus(true);
+            
+      } catch (error) {
+          console.error('Error fetching data:', error);
+      }
+  };
+ 
+
   const handleSginIn = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const entries = data.entries();
     let getFormErrorData = {};
     let isTrim = false;
-    let sessionObj={};
+    // let sessionObj={};
+    let sentDataToServer={};
+    
+    
 
     for (const [name, value] of entries) {
       if (value.trim() === '') {
@@ -79,7 +119,11 @@ function LoginPage() {
       } else {
         getFormErrorData[`signIn_${name}`] = false;
       }
+      sentDataToServer[name]=value;
     }
+
+    // console.log(sentDataToServer);
+
     CheckFormErrorStatus(getFormErrorData, 'check');
 
     if (isTrim) {
@@ -88,11 +132,17 @@ function LoginPage() {
     // console.log('sign innnnnn');
 
     CheckLoadingButtonStatus(isTrim);
+
+
+    fetchData({
+        name: data.get('email'),
+        password: data.get('password'),
+      });
     
-    let checkUserEdit=(data.get('email')==='testAcount')?false:true;
-    sessionObj={ isAuthenticated: true, username: data.get('email'),isEdit:checkUserEdit }
-    sessionStorage.setItem("sessionAut", JSON.stringify(sessionObj));
-    navigate('/home');
+    // let checkUserEdit=(data.get('email')==='testAcount')?false:true;
+    // sessionObj={ isAuthenticated: true, username: data.get('email'),isEdit:checkUserEdit }
+    // sessionStorage.setItem("sessionAut", JSON.stringify(sessionObj));
+    // navigate('/home');
 
 
     // console.log({
@@ -128,7 +178,7 @@ function LoginPage() {
     if (!isEmail || !isAllValuesEqual(pwdHplertextColor)) {
       return;
     }
-    console.log('eeee'+isTrim);
+    // console.log('eeee'+isTrim);
     CheckLoadingButtonStatus(isTrim);
 
     countdownTimer(CheckLoadingButtonStatus);
@@ -153,7 +203,7 @@ function LoginPage() {
     if (isLoading) {
       return;
     }
-    console.log("sign in ");
+    // console.log("sign in ");
     setIsSignIn(true);
     setVariant({
       signin: 'contained',
@@ -167,7 +217,7 @@ function LoginPage() {
     if (isLoading) {
       return;
     }
-    console.log("sign up ");
+    // console.log("sign up ");
     setIsSignIn(false);
     setVariant({
       signup: 'contained',
@@ -202,7 +252,7 @@ function LoginPage() {
         break;
       default:
         // 执行当expression不等于任何一个case时的代码块
-        console.log(fields);
+        // console.log(fields);
         Object.entries(fields).map(([key, value]) => {
           // 对每个属性名进行操作
           errors[key] = false
@@ -331,9 +381,9 @@ function LoginPage() {
                 </LoadingButton>
                 <Grid container>
                   <Grid item xs>
-                    <Link href="#" variant="body2">
-                      Forgot password?
-                    </Link>
+                    <Typography variant="body1" gutterBottom sx={{color:'red'}} > 
+                      {loginStatesText}
+                    </Typography>
                   </Grid>
                 </Grid>
               </Box>

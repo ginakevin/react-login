@@ -10,9 +10,10 @@ import  rows from '../StorageForTempt';
 import CommonDiv from './CommonDiv';
 
 const data = {
-  labels: rows.map((data)=>{
-    return data.productName.split("-")[0];
-  }),
+  // labels: rows.map((data)=>{
+  //   return data.productName.split("-")[0];
+  // }),
+  labels:[],
   datasets: [
     {
       label: 'Price',
@@ -33,7 +34,8 @@ const data = {
       pointHoverBorderWidth: 2,
       pointRadius: 1,
       pointHitRadius: 10,
-      data: rows.map((data)=>data.price),
+      // data: rows.map((data)=>data.price),
+      data:[],
     }
   ]
 };
@@ -46,7 +48,17 @@ const options = {
       }
   };
 
-const LineChart = ({id}) =>{ 
+const LineChart = ({id,chartData}) =>{ 
+  const getData={
+    ...data,
+    labels: chartData.map((data)=>{
+        return data.productName;
+    }),
+    datasets: [{
+       ...data.datasets[0],
+       data: chartData.map((data)=>data.price),
+    }],
+  };
 
     return(
         <>
@@ -54,7 +66,7 @@ const LineChart = ({id}) =>{
           <CardContent>
               <CommonDiv>
                 {(width, height) => (
-                    <Line id={id} data={data} options={options} />
+                    <Line id={id} data={getData} options={options} />
                 )}
               </CommonDiv>
             <Typography  variant="h6" >

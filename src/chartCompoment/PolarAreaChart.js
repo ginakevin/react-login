@@ -10,13 +10,15 @@ import  rows from '../StorageForTempt';
 import CommonDiv from './CommonDiv';
 
 const data = {
-    labels: rows.map((data)=>{
-        return data.productName.split("-")[0];
-      }),
+    // labels: rows.map((data)=>{
+    //     return data.productName.split("-")[0];
+    //   }),
+  label:[],
   datasets: [
     {
       label: 'My First Dataset',
-      data: rows.map((data)=>data.category),
+      // data: rows.map((data)=>data.category),
+      data:[],
       backgroundColor: [
         'rgba(255, 99, 132, 0.5)',
         'rgba(75, 192, 192, 0.5)',
@@ -48,17 +50,27 @@ const options = {
   },
 };
 
-const PolarAreaChart = () => {
+const PolarAreaChart = ({chartData}) => {
+  const getData={
+    ...data,
+    labels: chartData.map((data)=>{
+        return data.productName;
+    }),
+    datasets: [{
+       ...data.datasets[0],
+       data: chartData.map((data)=>data.width),
+    }],
+  };
     return(
         <Card>
             <CardContent>
                 <CommonDiv>
                   {(width, height) => (
-                      <PolarArea data={data} options={options} />
+                      <PolarArea data={getData} options={options} />
                   )}
                 </CommonDiv>
                 <Typography  variant="h6" >
-                    show amount chart
+                    show width chart
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                     This is use PolarArea Chart to display

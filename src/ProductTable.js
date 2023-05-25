@@ -1,13 +1,25 @@
 import * as React from 'react';
-import { useState,useEffect,Component } from 'react';
+import { useState,useEffect,Component,useRef } from 'react';
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import {
     Box,
     styled,
-    Typography
+    Typography,
+    IconButton,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
+    Alert,
+    Grid
   } from '@mui/material';
   import { useTheme } from "@mui/material/styles";
-  import  rows from './StorageForTempt'
+  import  rows from './StorageForTempt';
+  import DeleteIcon from '@mui/icons-material/Delete';
+  import ModeEditIcon from '@mui/icons-material/ModeEdit';
+
 
 const cols=[
   { field: 'productName',headerName: 'Product Name', hideable: false,},
@@ -32,8 +44,20 @@ const cols=[
   { field: 'width',headerName: 'Width', },
   { field: 'height',headerName: 'Height',},
   {
-    field: 'action',
-    headerName: '',
+    field: 'Update',
+    headerName: 'Update',
+    sortable: false,
+    width: 100,
+    disableClickEventBubbling: true,
+    renderCell: (params) => {
+      return (
+        <button onClick={() => console.log(`Button clicked for row ${params.id}`)}>Click me</button>
+      );
+    },
+  },
+  {
+    field: 'Delete',
+    headerName: 'Delete',
     sortable: false,
     width: 100,
     disableClickEventBubbling: true,
@@ -64,6 +88,35 @@ const BoxWrapper = styled(Box)({
   overflow: 'auto',
 });
 export default function ProductTable(props) {
+
+  // console.log("2");
+
+  const [tableRow,setTableRow]=useState([]);
+  const getSessionObj = sessionStorage.getItem("sessionAut");
+  const auth = JSON.parse(getSessionObj);
+  const [open, setOpen] = useState(false);
+  const [deleteItemData,setDeleteItemData]=useState({});
+  const [alertStates,setAlertStates]=useState({display:'none'});
+  const timerRef = useRef(null);
+  const [alertSeverity,setAlertSeverity]=useState("success");
+  const [alertText,setAlertText]=useState("This is a success alert — Delete success");
+
+  const handleOpen = (params) => {
+    setDeleteItemData(params);
+    setOpen(true);
+   
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleDelete = () => {
+    // Perform delete action here
+    handleClickToDelete();
+    setOpen(false);
+  };
+
   /**每次resize 時重新計算DataGrid的寬高
    */
   const [width, setWidth] = useState(window.innerWidth-100);
@@ -83,6 +136,36 @@ export default function ProductTable(props) {
   }, []);
   /** end */
 
+  useEffect(() => {
+    const callTableData = async () => {
+      
+      try {
+        const payload = {
+          "token": auth.token,
+          "name": auth.username
+        };
+  
+        const response = await fetch('http://demo1.tsmc-ai.com:3009/products/total/all', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+  
+        const jsonData = await response.json();
+        const updatedData = jsonData.map((obj, index) => ({ ...obj, id: index + 1 }));
+        setTableRow(updatedData);
+        // console.log(updatedData);
+      } catch (error) {
+        // console.error('获取数据时出错：', error);
+      }
+    }
+    callTableData();
+  }, []);
+
+
+ 
   const handleButtonClick = (params) => {
     let getData={
       showTable:false,
@@ -92,28 +175,97 @@ export default function ProductTable(props) {
     // console.log(`Button clicked for row with ID ${params.row.id}`);
   }
 
+  const handleClickToDelete=async()=>{
+    let params={...deleteItemData};
+    //做一個2次確認刪除ui
+    let payload={
+      "id": params.row._id,
+      "token": auth.token
+    }
+    // console.log(params);
+    try{
+      const response = await fetch('http://demo1.tsmc-ai.com:3009/products/delete/id', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload) // 根据需要设置请求体
+      });
+            
+        const jsonData = await response.json();
+        if(jsonData.status==='success'){
+          const updatedData = tableRow.filter((item) => item._id !== params.row._id);
+          setTableRow(updatedData);
+          //alert說明成功
+          setAlertSeverity('success');
+          setAlertText("This is a success alert — Delete success");
+          
+        }
+        else{
+          //當無法刪除時alert 說明
+          setAlertSeverity('error');
+          setAlertText("This is a error alert — Please contact the administrator regarding permission issues.");
+        }
+        setAlertStates({display:'block'});
+        timerRef.current = setTimeout(clearAlert, 2000);
 
+        // console.log(jsonData);
+    }catch(error){
+
+    }
+  }
+  const clearAlert=()=>{
+    setAlertStates({display:'none'});
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+    // console.log(timerRef.current);
+  }
   return (  
     <>
     <Box sx={{marginTop:4}}>
-      <Typography align="left" variant="h4">All Products<br/>
-      {/* The width of this element is: {height}px */}
-      </Typography>
+      <Typography align="left" variant="h4">All Products</Typography>
+      <div style={alertStates}>
+        <Alert variant="filled" severity={alertSeverity} sx={{ mt: 1 }}>
+            {alertText}
+        </Alert>
+      </div>
+      {/* <Typography align="left" variant="h4">All Products<br/></Typography> */}
       <BoxWrapper id="my-element" >
           <StyledDataGrid
           columns={cols.map((col) => {
-            if (col.field === "action") {
+            if (col.field === "Update") {
               return {
                 ...col,
                 renderCell: (params) => (
-                  <button onClick={() => handleButtonClick(params)}>Click me</button>
-                ),
+                  // <button onClick={() => handleButtonClick(params)}>Click me</button>
+                      <IconButton
+                        onClick={() => handleButtonClick(params)}
+                        aria-label="edit"
+                        size="small"
+                      >
+                        <ModeEditIcon fontSize="inherit" color='info' />
+                      </IconButton>
+                )
+              };
+            }
+            if (col.field === "Delete") {
+              return {
+                ...col,
+                renderCell: (params) => (
+                      <IconButton
+                        onClick={() => handleOpen(params)}
+                        aria-label="edit"
+                        size="small"
+                      >
+                        <DeleteIcon fontSize="inherit" color='info' />
+                      </IconButton>
+                )
               };
             }
             return col;
           })}
             // columns={cols}
-            rows={rows}
+            rows={tableRow}//{rows}
             slots={{
               toolbar: GridToolbar,
             }} 
@@ -122,6 +274,20 @@ export default function ProductTable(props) {
           />
     </BoxWrapper>
   </Box>
+  <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this item?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleDelete} variant="contained" color="secondary">
+            Delete
+          </Button>
+        </DialogActions>
+  </Dialog>
   </>
   );
 }

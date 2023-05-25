@@ -3,12 +3,13 @@ import { useState,useEffect } from 'react';
 
 const styles={
     container:{
-      minWidth: '250px',
       border: '1px solid green',
       borderRadius: '8px',
       backgroundColor: 'green',
     },
     Inner:{
+      minWidth: '250px',
+      minHeight:'60px',
       display: 'flex',
       justifyContent: 'center' 
     }
@@ -20,8 +21,6 @@ function CommonDiv(props) {
      const [width, setWidth] = useState((window.innerWidth>=600)?window.innerWidth/2-90:window.innerWidth-130);
      const [height, setHeight] = useState((window.innerWidth>=600)?(window.innerWidth/2-90)/2:(window.innerWidth-130)/2);
    
-    // const [width, setWidth] = useState(300);
-    // const [height, setHeight] = useState(300);
     
     useEffect(() => {
        const handleResize = () => {
@@ -49,7 +48,8 @@ function CommonDiv(props) {
 
     return (
         <div style={containerStyle} >
-                {props.children(width, height)}
+                {/* {props.children(width, height)} */}
+                {typeof props.children === 'function' ? props.children(width, height) : props.children}
         </div>
     );
 }

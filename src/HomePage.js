@@ -116,6 +116,7 @@ export default function HomePage() {
   const [activeContent, setActiveContent] = useState('Dashbord');
 
   const handleListItemClick = (content) => {
+   
     setActiveContent(content);
   };
   return (

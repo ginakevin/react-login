@@ -3,10 +3,12 @@ import { useState } from 'react';
 import {
     Typography
   } from '@mui/material';
-import ProductTable from './ProductTable'
-import ProductFix from './ProductFix'
+import ProductTable from './ProductTable';
+import ProductFix from './ProductFix';
+import TableRows from './AllTableData';
 
 function AllTableContent(){
+    // console.log("1");
 
     const [showAllTableContent, setShowAllTableContent]=useState(true);
     const [tableData, setTableData]=useState();

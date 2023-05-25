@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useRef } from 'react';
 import {
   TextField,
   Button,
@@ -12,7 +12,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions
+  DialogActions,
+  Alert
 } from '@mui/material';
 import CreateImgFile from './CreateImgFile'
 import { styled } from '@mui/system';
@@ -40,6 +41,12 @@ const CreateProduct = (props) => {
   const [formData,setFormData]=useState([]);
 
   const [editDialog,setEditDialog]=useState(false);
+
+  const [alertStates,setAlertStates]=useState({display:'none'});
+  const timerRef = useRef(null);
+  const [alertSeverity,setAlertSeverity]=useState("success");
+  const [alertText,setAlertText]=useState("This is a success alert — create product detail success");
+
 
   const getSessionObj = sessionStorage.getItem("sessionAut");
   const auth = JSON.parse(getSessionObj);
@@ -75,6 +82,7 @@ const CreateProduct = (props) => {
   };
   const handleDialogConfirm=()=>{
     if(auth.isEdit){
+      fetchDataToServer();
       console.log('可以編輯並送出資料');
     }else{
       setEditDialog(true);
@@ -86,6 +94,60 @@ const CreateProduct = (props) => {
     setEditDialog(false);
   }
 
+  const fetchDataToServer= async()=>{
+    let fetchLink=(!!props.setData)?'http://demo1.tsmc-ai.com:3009/products/update/id':'http://demo1.tsmc-ai.com:3009/products/create';
+    let createPData={
+      "productName": name,
+      "category": selectedOption,
+      "description": description,
+      "image": Image,
+      "price": price,
+      "amount": amount,
+      "width": width,
+      "height": height,
+      "username": auth.username,
+      "token": auth.token
+    };
+    let getSentData=(!!props.setData)?{
+      ...createPData,
+      'id':props.setData._id
+    }:createPData;
+    // console.log(!!props.setData);
+    // console.log(props.setData);
+    // console.log(getSentData);
+    try{
+      const response = await fetch(fetchLink, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(getSentData) // 根据需要设置请求体
+      });
+            
+        const jsonData = await response.json();
+        if(jsonData.status==='success'){
+          setAlertSeverity('success');
+          setAlertText("This is a success alert — create product detail success");
+          //success顯示success的文字
+        }else{
+          setAlertSeverity('error');
+          setAlertText("This is a error alert — Please contact the administrator regarding permission issues.");
+          //erro顯示error 文字r    
+        }
+        setAlertStates({display:'block'});
+        timerRef.current = setTimeout(clearAlert, 2000);
+
+        // console.log(jsonData);
+    }catch(error){
+
+    }
+  }
+  const clearAlert=()=>{
+    setAlertStates({display:'none'});
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+    // console.log(timerRef.current);
+  }
   return (
     <Box sx={{
       display: 'flex',
@@ -239,9 +301,18 @@ const CreateProduct = (props) => {
          Save
         </Button> */}
         <Grid container justifyContent="flex-end">
-          <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-            Save
-          </Button>
+          <Grid item xs={8}>
+            <div style={alertStates}>
+              <Alert variant="filled" severity={alertSeverity} sx={{ mt: 1 }}>
+                {alertText}
+              </Alert>
+            </div>
+          </Grid>
+          <Grid item xs={2}>
+            <Button type="submit" variant="contained" sx={{ mt: 2 }}>
+              Save
+            </Button>
+          </Grid>
         </Grid>
       </form>
 
@@ -295,6 +366,7 @@ const CreateProduct = (props) => {
           </Button>
         </DialogActions>
       </Dialog>
+      
 
     </Box>
   );
